@@ -98,12 +98,36 @@ contract Raffle is VRFConsumerBaseV2Plus {
         emit RaffleEntered(msg.sender);
     }
 
+    // When should the winner be picked
+    /**
+     * @dev This is the function chainlink node will call
+     * @param  - ignored
+     * @return upKeepNeeded - true if its time to restart the lottery
+     * @return  - ignored
+     */
+
+    function checkUpKeep(
+        bytes memory /** checkData */
+    ) public view returns (bool upKeepNeeded, bytes memory /** performData */) {
+        bool timeHasPassed = ((block.timestamp - s_lastTimestamp) >=
+            i_interval);
+        bool isOpen = s_raffleState == RaffleState.OPEN;
+        bool hasBalance = address(this).balance > 0;
+        bool hasPlayers = s_players.length > 0;
+
+        bool upKeepNeeded = timeHasPassed && isOpen && hasBalance && hasPlayers;
+
+        return (upKeepNeeded, "");
+    }
+
     // 1. Get a  Random number
     // 2. Use Random number to pick a player
     // 3. be automatically called
 
-    function pickWinner() external {
-        if ((block.timestamp - s_lastTimestamp) > i_interval) {
+    function performUpKeep(bytes calldata /** performData */) external {
+        (bool upKeepNeeded, ) = checkUpKeep("");
+
+        if (!upKeepNeeded) {
             revert();
         }
 
