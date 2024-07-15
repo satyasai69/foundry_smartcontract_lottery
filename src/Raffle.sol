@@ -101,6 +101,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
     // 1. Get a  Random number
     // 2. Use Random number to pick a player
     // 3. be automatically called
+
     function pickWinner() external {
         if ((block.timestamp - s_lastTimestamp) > i_interval) {
             revert();
@@ -130,21 +131,29 @@ contract Raffle is VRFConsumerBaseV2Plus {
         return i_enterancefee;
     }
 
+    // CEI : Checks, Effect, Interactions
     function fulfillRandomWords(
         uint256 requestId,
         uint256[] calldata randomWords
     ) internal override {
+        //Checks
+
+        // Effect (Internal Contract State )
         uint256 indexOfWinner = randomWords[0] % s_players.length;
         address payable recentWinner = s_players[indexOfWinner];
         s_recentWinner = recentWinner;
-        (bool success, ) = recentWinner.call{value: address(this).balance}("");
+
         s_raffleState = RaffleState.OPEN;
 
         s_players = new address payable[](0);
         s_lastTimestamp = block.timestamp;
+        emit WinnerPinked(s_recentWinner);
+
+        // Interactions (External Contract Interactions)
+
+        (bool success, ) = recentWinner.call{value: address(this).balance}("");
         if (!success) {
             revert Raffle_TransferFailed();
         }
-        emit WinnerPinked(s_recentWinner);
     }
 }
