@@ -36,6 +36,16 @@ contract Raffle is VRFConsumerBaseV2Plus {
     /* Errors */
     error SendMoreToEnterRaffle();
     error Raffle_TransferFailed();
+    error Raffle__RaffleNotOpen();
+
+    /** Type Declarations */
+
+    enum RaffleState {
+        OPEN, //0
+        CALCULATING //1
+    }
+
+    /** state Variables */
 
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
     uint32 private constant NUM_WORDS = 1;
@@ -48,9 +58,12 @@ contract Raffle is VRFConsumerBaseV2Plus {
     uint256 private s_lastTimestamp;
     address private s_recentWinner;
 
+    RaffleState private s_raffleState;
+
     /** Events */
 
     event RaffleEntered(address indexed player);
+    event WinnerPinked(address indexed Winner);
 
     constructor(
         uint256 enterancefee,
@@ -62,10 +75,12 @@ contract Raffle is VRFConsumerBaseV2Plus {
     ) VRFConsumerBaseV2Plus(_vrfCoordinator) {
         i_enterancefee = enterancefee;
         i_interval = interval;
-        s_lastTimestamp = block.timestamp;
         i_keyHash = gasLane;
         i_subscriptionId = subscriptionId;
         i_callbackGasLimit = callbackGasLimit;
+
+        s_lastTimestamp = block.timestamp;
+        s_raffleState = RaffleState.OPEN;
     }
 
     function enterRaffle() external payable {
@@ -73,6 +88,10 @@ contract Raffle is VRFConsumerBaseV2Plus {
         //  require(msg.value >= i_enterancefee, SendMoreToEnterRaffle());
         if (msg.value < i_enterancefee) {
             revert SendMoreToEnterRaffle();
+        }
+
+        if (s_raffleState != RaffleState.OPEN) {
+            revert Raffle__RaffleNotOpen();
         }
 
         s_players.push(payable(msg.sender));
@@ -86,6 +105,8 @@ contract Raffle is VRFConsumerBaseV2Plus {
         if ((block.timestamp - s_lastTimestamp) > i_interval) {
             revert();
         }
+
+        s_raffleState = RaffleState.CALCULATING;
 
         VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient
             .RandomWordsRequest({
@@ -117,8 +138,13 @@ contract Raffle is VRFConsumerBaseV2Plus {
         address payable recentWinner = s_players[indexOfWinner];
         s_recentWinner = recentWinner;
         (bool success, ) = recentWinner.call{value: address(this).balance}("");
+        s_raffleState = RaffleState.OPEN;
+
+        s_players = new address payable[](0);
+        s_lastTimestamp = block.timestamp;
         if (!success) {
             revert Raffle_TransferFailed();
         }
+        emit WinnerPinked(s_recentWinner);
     }
 }
