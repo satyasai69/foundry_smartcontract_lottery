@@ -37,6 +37,11 @@ contract Raffle is VRFConsumerBaseV2Plus {
     error SendMoreToEnterRaffle();
     error Raffle_TransferFailed();
     error Raffle__RaffleNotOpen();
+    error Raffle_UpKeepNotNaeed(
+        uint256 balance,
+        uint256 playerLength,
+        uint256 raffleState
+    );
 
     /** Type Declarations */
 
@@ -128,7 +133,11 @@ contract Raffle is VRFConsumerBaseV2Plus {
         (bool upKeepNeeded, ) = checkUpKeep("");
 
         if (!upKeepNeeded) {
-            revert();
+            revert Raffle_UpKeepNotNaeed(
+                address(this).balance,
+                s_players.length,
+                uint(s_raffleState)
+            );
         }
 
         s_raffleState = RaffleState.CALCULATING;
