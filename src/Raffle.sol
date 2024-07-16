@@ -120,7 +120,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         bool hasBalance = address(this).balance > 0;
         bool hasPlayers = s_players.length > 0;
 
-        bool upKeepNeeded = timeHasPassed && isOpen && hasBalance && hasPlayers;
+        upKeepNeeded = timeHasPassed && isOpen && hasBalance && hasPlayers;
 
         return (upKeepNeeded, "");
     }
@@ -155,7 +155,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
                 )
             });
 
-        uint256 requestId = s_vrfCoordinator.requestRandomWords(request);
+        s_vrfCoordinator.requestRandomWords(request);
     }
 
     /** Getter function to read enterancefee */
@@ -166,7 +166,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
 
     // CEI : Checks, Effect, Interactions
     function fulfillRandomWords(
-        uint256 requestId,
+        uint256 /*requestId,*/,
         uint256[] calldata randomWords
     ) internal override {
         //Checks
