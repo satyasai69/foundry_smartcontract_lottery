@@ -92,10 +92,22 @@ To automate the lottery process using Chainlink Automation:
    Users can participate by sending the fixed ETH amount to the contract.
 
    ```solidity
-   function enterLottery() public payable {
-       require(msg.value == LOTTERY_FEE, "Incorrect ETH amount sent!");
-       players.push(msg.sender);
-   }
+
+    function enterRaffle() external payable {
+        //  require(msg.value >= i_enterancefee, "Not enough ETH send!");
+        //  require(msg.value >= i_enterancefee, SendMoreToEnterRaffle());
+        if (msg.value < i_enterancefee) {
+            revert SendMoreToEnterRaffle();
+        }
+
+        if (s_raffleState != RaffleState.OPEN) {
+            revert Raffle__RaffleNotOpen();
+        }
+
+        s_players.push(payable(msg.sender));
+        emit RaffleEntered(msg.sender);
+    }
+
    ```
 
 2. **Draw the Winner**
