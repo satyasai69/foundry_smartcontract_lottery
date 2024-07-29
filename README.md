@@ -19,6 +19,13 @@ Before you begin, ensure you have the following installed:
    cd lottery-smart-contract
    ```
 
+   **update env.example to .env and fill the required information**
+
+   ```
+    SEPOLIA_RPC_URL=
+    ETHERSCAN_API_KEY=
+   ```
+
 2. **Install Foundry**
 
    Follow the [official Foundry installation guide](https://book.getfoundry.sh/getting-started/installation).
