@@ -37,7 +37,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
     error SendMoreToEnterRaffle();
     error Raffle_TransferFailed();
     error Raffle__RaffleNotOpen();
-    error Raffle_UpKeepNotNaeed(
+    error Raffle__UpKeepNotNeeded(
         uint256 balance,
         uint256 playerLength,
         uint256 raffleState
@@ -66,7 +66,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
     RaffleState private s_raffleState;
 
     /** Events */
-
+    event RequestRaffleWinner(uint256 indexed requestId);
     event RaffleEntered(address indexed player);
     event WinnerPinked(address indexed Winner);
 
@@ -133,7 +133,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         (bool upKeepNeeded, ) = checkUpKeep("");
 
         if (!upKeepNeeded) {
-            revert Raffle_UpKeepNotNaeed(
+            revert Raffle__UpKeepNotNeeded(
                 address(this).balance,
                 s_players.length,
                 uint(s_raffleState)
@@ -155,7 +155,8 @@ contract Raffle is VRFConsumerBaseV2Plus {
                 )
             });
 
-        s_vrfCoordinator.requestRandomWords(request);
+        uint256 requestId = s_vrfCoordinator.requestRandomWords(request);
+        emit RequestRaffleWinner(requestId);
     }
 
     /** Getter function to read enterancefee */
@@ -198,5 +199,13 @@ contract Raffle is VRFConsumerBaseV2Plus {
         uint256 indexoOfPlayers
     ) external view returns (address) {
         return s_players[indexoOfPlayers];
+    }
+
+    function getLastTimeStamp() public view returns (uint256) {
+        return s_lastTimestamp;
+    }
+
+    function getRecentWinner() public view returns (address) {
+        return s_recentWinner;
     }
 }
